@@ -1,0 +1,141 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OrbitWatch · Planet X and SPHEREx</title><style>
+:root{--ink:#173d69;--hi:#15518b;--ln:#89aace;--bg:#edf7ff;--gold:#ffd15b}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:#587ba9;font:14px/1.45 Tahoma,Verdana,sans-serif;color:var(--ink)}
+.w{max-width:1040px;margin:16px auto;background:#fff;border:1px solid #264e80;box-shadow:0 3px 16px #1238}
+header{padding:12px 18px;color:#fff;background:linear-gradient(#65a3e4,#225a98)}header b{font:700 26px "Trebuchet MS",sans-serif}header small{display:block}
+nav{display:flex;flex-wrap:wrap;gap:4px;padding:8px 12px 0;background:#d8eafb;border-bottom:1px solid var(--ln)}
+button,input,select{font:inherit;color:var(--ink)}
+button{padding:6px 12px;min-height:36px;border:1px solid #819fbc;border-radius:4px;background:linear-gradient(#fff,#d3e4f5);cursor:pointer}
+button:hover{background:#c9e4fb}button.on,.tab[aria-selected=true]{background:#fff;border-color:#437eb9;font-weight:700}
+button.on{background:var(--gold)}.tab{border-radius:5px 5px 0 0;font-weight:700}
+:focus-visible{outline:3px solid #f28c00;outline-offset:1px}
+main{padding:14px}.note,.box{border:1px solid #b7cce1;padding:10px;margin-bottom:12px}.note{background:var(--bg)}
+h1,h2,h3{font-family:"Trebuchet MS",sans-serif;color:var(--hi);margin:0 0 6px}h1{font-size:21px}h2{font-size:17px}h3{font-size:14px}
+.g{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+canvas{width:100%;height:auto;display:block;background:#051326;border:2px groove #c8d7e8;cursor:crosshair}
+.badge{padding:2px 8px;background:#ffffe5;border:1px solid #e1c15a;font-size:12px}
+.q{max-height:300px;overflow:auto;display:grid;gap:5px}.q button{text-align:left;display:block;width:100%}.q button.sel{background:#c9e4fb;border-color:#437eb9}
+.sc{float:right;color:#926400;font-weight:700}.tag{font-size:12px;color:#39722d}
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin:8px 0}.facts div{padding:5px 8px;background:#f3f8fd;border:1px solid #ccdeed}.facts small{display:block;color:#51698a}
+.y{padding:8px;background:#ffffe5;border:1px solid #e1c15a;margin:8px 0}
+.row{display:grid;grid-template-columns:110px 1fr 28px;gap:6px;align-items:center;font-size:12px}
+label{display:block;margin:6px 0}input[type=number]{width:100%;padding:6px}
+.st{padding:6px 12px;background:#d9e9f7;border-top:1px solid #8eafcf}
+ol{padding-left:20px}li{margin-bottom:8px}
+button{transition:transform .12s ease-out}button:active{transform:scale(.97)}b,.sc{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:860px){.w{margin:0}.g{grid-template-columns:1fr}}
+</style></head><body><div class="w">
+<header><b>◯ OrbitWatch</b><small>NASA Space Apps Challenge 2026 · Planet X and SPHEREx · spot what changes in the sky</small></header>
+<nav role="tablist" id="tabs"></nav>
+<main>
+<section id="p-ex"><div class="note"><h1>The sky looks still. It isn't.</h1>Stars stay put. Anything <b>nearby</b> (asteroids, comets, brown dwarfs, maybe a far-off planet) shifts between pictures taken on different dates.
+<b>Try it:</b> ① press <b>Blink</b> ② click a pink box ③ give your verdict. Or play <b>Spot the mover</b>. <span class="badge">Simulated demo images, not NASA observations</span></div>
+<div class="g"><div>
+<div class="bar"><select id="fld" aria-label="Sky field"></select><button id="blink">▶ Blink</button><button id="diff">Show difference</button><button id="game">🎯 Spot the mover</button><button id="cmp">↔ Compare</button></div><div class="bar" id="sprow" hidden><label style="margin:0">Drag to wipe between earlier and later: <input id="sp" type="range" min="0" max="100" value="50" aria-label="Wipe divider"></label></div>
+<div class="bar" id="eprow"><label style="margin:0">Date: <b id="eplab">earlier</b> <input id="ep" type="range" min="0" max="100" value="0" aria-label="Move between earlier and later observation"> <b>later</b></label></div>
+<canvas id="sky" width="950" height="570" aria-label="Simulated sky map"></canvas>
+<div class="y" id="gbox" hidden></div></div>
+<aside><div class="box" id="dbox"><h2 id="dt"></h2><p id="ds"></p><div class="y" id="dp"></div><div class="facts" id="df"></div><p id="dw"></p><h3>Your verdict</h3><div class="bar" id="vb"></div><button id="cp">Copy evidence note</button></div>
+<div class="box"><h2>Candidate queue</h2><div class="bar" id="flt"></div><div class="q" id="q"></div>
+<details><summary>Change how candidates are ranked</summary><div id="wt"></div><button id="wr">Reset weights</button></details></div></aside></div></section>
+
+<section id="p-how" hidden><div class="note"><h1>How it works, in 5 steps</h1></div><ol>
+<li><b>NASA takes sky pictures.</b> The SPHEREx telescope maps the whole sky every six months in 102 colors of infrared light.</li>
+<li><b>Compare the same spot on different dates.</b> Fixed stars don't move. Close objects do.</li>
+<li><b>Score each change.</b> Movement, image clarity and agreement with other data raise the score. Signs of an image error lower it.</li>
+<li><b>People check.</b> Did it really move? Is it a camera glitch? Does it need an expert?</li>
+<li><b>Experts confirm with official data.</b> A change is a lead, not a discovery. OrbitWatch never claims to have found Planet X.</li></ol>
+<div class="y"><b>Why Planet X is hard:</b> a single SPHEREx image may be too faint to show a planet that far away, so finding one would take many pictures and expert follow-up.</div></section>
+
+<section id="p-real" hidden><div class="note"><h1>See real SPHEREx data</h1>Pick a place in the sky. This opens NASA's official archive (IRSA) in a new tab.</div>
+<div class="bar" id="pre"></div><div class="g" style="grid-template-columns:repeat(3,1fr)"><label>Right ascension (0–360°)<input id="ra" type="number" step="any" value="83.8221"></label><label>Declination (−90 to 90°)<input id="dec" type="number" step="any" value="-5.3911"></label><label>Search size (1–3600 arcsec)<input id="sr" type="number" step="any" value="60"></label></div>
+<button id="go">Open NASA/IRSA search ↗</button> <span id="er" role="alert"></span>
+<div class="y"><b>Keep the evidence:</b> save the archive link, date, product ID and quality flags.</div>
+<div class="box"><h2>Use real NASA images in OrbitWatch</h2><ol>
+<li><b>Find exposures</b> that cover your spot: use the button above (IRSA SPHEREx Data Explorer).</li>
+<li><b>Pick two from different dates.</b> Prefer small cutouts: full SPHEREx files are large (other teams report about 69 MB each).</li>
+<li><b>Know the files.</b> They are FITS files with layers such as IMAGE, VARIANCE and FLAGS. One image spans a range of wavelengths, it is not a single color.</li>
+<li><b>Make two PNGs of the same patch</b>, same orientation and scale (for example with Python and astropy). If they are not aligned, stars will seem to jump.</li>
+<li><b>Load them below</b>, then Blink, Compare or use the Date slider.</li>
+<li><b>Before calling anything new,</b> check it against JPL's small-body tools.</li></ol>
+<div class="bar"><label style="margin:0">Earlier image <input type="file" id="fa" accept="image/*"></label><label style="margin:0">Later image <input type="file" id="fb" accept="image/*"></label></div><span id="fe" role="status"></span>
+<p><small>Credit: SPHEREx data are from NASA/JPL-Caltech, served by NASA/IPAC IRSA. Copy IRSA's exact acknowledgment and DOI from its SPHEREx page before you submit.</small></p></div></section>
+</main><div class="st" id="st" aria-live="polite">Ready</div></div>
+<script>
+const $=s=>document.querySelector(s),cv=$('#sky'),x=cv.getContext('2d'),W=950,H=570;
+const names=['Orion Dust Lane','Cygnus Star River','Ecliptic Band A','Ecliptic Band B','Southern Pole','Northern Pole','Vela Ridge','Taurus Cloud','Carina Nebula','Perseus Field','Aquila Window','Scorpius Dust','Sagittarius Core','Andromeda Edge','Ursa Major','Canis Major','Lupus Field','Monoceros Glow','Puppis Cloud','Corona Australis'];
+// id, kind, type(m moving,b brightness,e event,a artifact), [motion,signal,cross-match,image-risk], dx, dy, baseX, baseY, summary, next step
+const D=[['OW-26-041','Possible moving object','m',[94,91,86,8],28,-11,640,205,'A small point shifted in a straight line between images.','Check official SPHEREx products, then compare with known asteroid and comet records.'],
+['OW-26-118','Possible moving object','m',[81,85,73,11],-18,16,300,370,'This source shifted in one clear direction and has a good signal.','Get a third observation, then rule out a known minor planet.'],
+['OW-26-203','Brightness change','b',[62,95,55,6],0,0,785,400,'The point did not move but looks brighter later.','Compare brightness on more dates. It may be a variable star.'],
+['OW-26-277','Near image edge','m',[72,67,92,19],14,5,460,125,'Possible movement near an image edge, where errors are common.','Check quality flags and ask an expert to review the edge.'],
+['OW-26-301','Short event','e',[58,80,49,10],0,0,180,285,'This point appears in one observation but not the other.','Find another observation before deciding it is real.'],
+['OW-26-390','Possible image artifact','a',[66,64,38,62],-9,5,850,185,'Warning signs in the image make this a low-priority lead.','Do not announce it. Compare original archive images and quality data.']];
+const VERD={likely_real_motion:'Likely real motion',likely_artifact:'Likely image problem',needs_follow_up:'Needs follow-up'};
+const WL=['Movement','Image clarity','Other data agrees','Image-error risk'],W0=[35,30,20,15];
+let IMG=null,cmp=false,F=0,sel=0,ep=0,diff=false,flt='all',timer=null,G=null,w=[...W0],R={};
+try{R=JSON.parse(localStorage.getItem('ow-rev')||'{}')}catch(e){}
+const rnd=n=>((Math.sin(n)*9999)%1+1)%1,say=t=>$('#st').textContent=t;
+const pos=(i,e)=>{const d=D[i];return[d[6]+((F*67+i*23)%110)-55+e*d[4],d[7]+((F*31+i*17)%70)-35+e*d[5]]};
+const score=i=>{const e=D[i][3];return Math.max(0,(e[0]*w[0]+e[1]*w[1]+e[2]*w[2]-e[3]*w[3])/Math.max(w.reduce((a,b)=>a+b),1))};
+const ok=i=>flt=='all'||(flt=='m'&&D[i][2]=='m')||(flt=='b'&&D[i][2]=='b');
+function glow(px,py,c,r=2){const g=x.createRadialGradient(px,py,0,px,py,r*9);g.addColorStop(0,'#fff');g.addColorStop(.13,c);g.addColorStop(1,'transparent');x.fillStyle=g;x.beginPath();x.arc(px,py,r*9,0,7);x.fill()}
+function box(px,py,c,t){x.strokeStyle=c;x.lineWidth=2;x.strokeRect(px-9,py-9,18,18);if(t){x.fillStyle='#ffdc80';x.font='bold 13px Tahoma';x.fillText(t,px+13,py-11)}}
+function bg(s){const h=(s*23)%100;x.fillStyle=`hsl(${211+h/9},55%,8%)`;x.fillRect(0,0,W,H);x.save();x.filter='blur(34px)';const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,`hsl(${190+h},55%,23%)`);g.addColorStop(1,`hsl(${285-h},54%,18%)`);x.fillStyle=g;x.globalAlpha=.6;x.beginPath();x.ellipse(420+(s%5)*50,270,510,70,-.42,0,7);x.fill();x.restore();
+for(let i=0;i<500;i++){x.fillStyle=`rgba(${150+rnd(i)*105},${180+rnd(i+7)*70},255,${.2+rnd(i+4)*.7})`;x.beginPath();x.arc(rnd(i*41+s*93)*W,rnd(i*89+s*11)*H,.35+rnd(i*7+s)*1.9,0,7);x.fill()}}
+function draw(){if(!cmp||G)return scene();const s=ep,k=+$('#sp').value/100*W;ep=0;scene();x.save();x.beginPath();x.rect(k,0,W-k,H);x.clip();ep=1;scene();x.restore();ep=s;x.fillStyle='#fff';x.fillRect(k-1.5,0,3,H);x.font='bold 13px Tahoma';x.fillText('◀ earlier',Math.max(6,k-76),20);x.fillText('later ▶',Math.min(W-60,k+8),20)}
+function fit(im){const f=Math.min(W/im.width,H/im.height);x.drawImage(im,(W-im.width*f)/2,(H-im.height*f)/2,im.width*f,im.height*f)}
+function scene(){
+ if(IMG){x.globalAlpha=1;x.fillStyle='#000';x.fillRect(0,0,W,H);fit(IMG[0]);x.globalAlpha=ep;fit(IMG[1]);x.globalAlpha=1;return}
+ if(G){bg(G.n+3);G.s.forEach(p=>glow(p[0],p[1],'#9fc4ff'));const a=G.x+ep*G.dx,b=G.y+ep*G.dy;glow(a,b,'#9fc4ff');
+  if(G.done){x.strokeStyle='#ffd15b';x.beginPath();x.moveTo(G.x,G.y);x.lineTo(G.x+G.dx,G.y+G.dy);x.stroke();box(a,b,'#ffd15b','the mover')}return}
+ bg(F);D.forEach((d,i)=>{x.globalAlpha=ok(i)?1:.25;const p=pos(i,0),q=pos(i,1),c=pos(i,ep),r=d[2]=='b'?2+ep*3:2,mv=d[4]||d[5];let at=c;
+  if(diff){glow(p[0],p[1],'#ef5f94',mv?2:5);if(mv){glow(q[0],q[1],'#7ee7ff');x.strokeStyle='#7ee7ff';x.beginPath();x.moveTo(p[0],p[1]);x.lineTo(q[0],q[1]);x.stroke();at=q}else at=p}
+  else glow(c[0],c[1],i==sel?'#ffd15b':'#ef5f94',r);
+  box(at[0],at[1],i==sel?'#ffd15b':'#ef5f94',i==sel?d[0]:'');x.globalAlpha=1})}
+function setEp(v){ep=v;$('#ep').value=v*100;$('#eplab').textContent=v<.5?'earlier':'later';draw()}
+function stop(){clearInterval(timer);timer=null;$('#blink').textContent='▶ Blink';$('#blink').classList.remove('on')}
+function blink(){if(timer)return stop();cmp=false;$('#cmp').classList.remove('on');$('#sprow').hidden=true;diff=false;$('#diff').classList.remove('on');$('#blink').textContent='■ Stop';$('#blink').classList.add('on');timer=setInterval(()=>setEp(ep<.5?1:0),700)}
+function why(i){const e=D[i][3],t=[['movement',e[0]],['image clarity',e[1]],['agreement with other data',e[2]]].sort((a,b)=>b[1]-a[1]);return `Ranked ${t[0][1]>=80?'high':'by'} mostly on ${t[0][0]} (${t[0][1]}) and ${t[1][0]} (${t[1][1]})${e[3]>30?'; strong image-error warnings pull it down':''}.`}
+function choose(i){sel=i;const d=D[i],e=d[3],k=F+'-'+d[0],v=R[k];$('#dt').textContent=d[0]+' · '+d[1];$('#ds').textContent=d[8];
+ $('#dp').innerHTML='<b>In simple words:</b> '+(d[2]=='b'?'this dot stayed still but got brighter.':d[2]=='e'?'this dot showed up in only one picture.':'this dot seems to have moved.')+' A clue, not proof.';
+ $('#df').innerHTML=WL.map((n,j)=>`<div><small>${n}</small><b>${e[j]}/100</b></div>`).join('')+`<div><small>Score</small><b>${score(i).toFixed(1)}/100</b></div><div><small>Your verdict</small><b>${v?VERD[v]:'none yet'}</b></div>`;
+ $('#dw').textContent=why(i)+' Next: '+d[9];
+ $('#vb').innerHTML=Object.keys(VERD).map(c=>`<button data-v="${c}" class="${v==c?'on':''}">${VERD[c]}</button>`).join('');
+ $('#vb').querySelectorAll('button').forEach(b=>b.onclick=()=>{R[k]=b.dataset.v;try{localStorage.setItem('ow-rev',JSON.stringify(R))}catch(e){}say(`Saved on this device: ${d[0]} → ${VERD[b.dataset.v]}`);choose(i)});
+ queue();draw()}
+function queue(){$('#q').innerHTML=D.map((d,i)=>i).filter(ok).sort((a,b)=>score(b)-score(a)).map(i=>`<button data-i="${i}" class="${i==sel?'sel':''}"><b>${D[i][0]}</b><span class="sc">${score(i).toFixed(1)}</span><div class="tag">${D[i][1]}${R[F+'-'+D[i][0]]?' · '+VERD[R[F+'-'+D[i][0]]]:''}</div></button>`).join('')||'Nothing matches this filter.';
+ $('#q').querySelectorAll('button').forEach(b=>b.onclick=()=>choose(+b.dataset.i))}
+function newRound(){const a=Math.random()*6.28,s=28+Math.random()*20;G={n:(G?G.n+1:0),score:G?G.score:0,tries:G?G.tries:0,done:0,x:90+Math.random()*(W-260),y:90+Math.random()*(H-260),dx:Math.cos(a)*s,dy:Math.sin(a)*s,s:Array.from({length:7},()=>[60+Math.random()*(W-120),60+Math.random()*(H-120)])};
+ $('#gbox').innerHTML=`<span id="gm">Round ${G.n+1}: one dot moves between the two dates. Press Blink, then <b>click the dot that moves</b>.</span> <span id="gs">Found ${G.score} of ${G.tries}.</span> <button id="nx" hidden>Next round</button> <button id="ex">Back to explore</button>`;
+ $('#nx').onclick=newRound;$('#ex').onclick=endGame;setEp(0);if(!timer)blink()}
+function endGame(){G=null;$('#gbox').hidden=true;$('#game').classList.remove('on');stop();choose(sel)}
+function tab(id){['ex','how','real'].forEach(t=>{$('#p-'+t).hidden=t!=id;$('#t-'+t).setAttribute('aria-selected',t==id)});if(id!='ex')stop();say('Ready')}
+[['ex','Explore the sky'],['how','How it works'],['real','Real NASA data']].forEach(([id,t])=>{const b=document.createElement('button');b.className='tab';b.id='t-'+id;b.role='tab';b.textContent=t;b.onclick=()=>tab(id);$('#tabs').append(b)});
+names.forEach((n,i)=>$('#fld').add(new Option((i+1)+'. '+n,i)));
+$('#fld').onchange=e=>{F=+e.target.value;if(G)endGame();choose(0)};
+$('#blink').onclick=blink;$('#ep').oninput=e=>{stop();setEp(e.target.value/100)};
+$('#diff').onclick=()=>{if(G)return;stop();diff=!diff;$('#diff').classList.toggle('on',diff);$('#diff').textContent=diff?'Show one image':'Show difference';say(diff?'Pink = earlier position, blue = later. A lone pink glow = brightness change.':'Single observation');draw()};
+$('#game').onclick=()=>{if(G)return endGame();IMG=null;cmp=false;$('#cmp').classList.remove('on');$('#sprow').hidden=true;stop();diff=false;$('#diff').classList.remove('on');$('#game').classList.add('on');$('#gbox').hidden=false;newRound()};
+cv.onclick=e=>{if(IMG)return;const r=cv.getBoundingClientRect(),px=(e.clientX-r.left)*W/r.width,py=(e.clientY-r.top)*H/r.height;
+ if(G){if(G.done)return;const h=Math.min(Math.hypot(G.x-px,G.y-py),Math.hypot(G.x+G.dx-px,G.y+G.dy-py))<34;G.done=1;G.tries++;G.score+=h;stop();$('#nx').hidden=0;$('#gm').textContent=h?'✅ Found it!':'❌ Not quite.';$('#gs').textContent=`Found ${G.score} of ${G.tries}.`;say(h?'You found the mover.':'The moving dot is now boxed in gold.');draw();return}
+ const h=D.map((d,i)=>[i,Math.hypot.apply(0,pos(i,diff?1:ep).map((v,j)=>v-[px,py][j]))]).filter(a=>a[1]<32).sort((a,b)=>a[1]-b[1])[0];if(h)choose(h[0])};
+[['all','All'],['m','Moving'],['b','Brightness']].forEach(([k,t])=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>{flt=k;[...$('#flt').children].forEach(c=>c.classList.toggle('on',c==b));queue();draw()};if(k=='all')b.className='on';$('#flt').append(b)});
+function wui(){$('#wt').innerHTML=WL.map((n,j)=>`<div class="row"><span>${n}</span><input type="range" min="0" max="100" value="${w[j]}" data-j="${j}" aria-label="${n} weight"><b>${w[j]}</b></div>`).join('');
+ $('#wt').querySelectorAll('input').forEach(i=>i.oninput=()=>{w[i.dataset.j]=+i.value;i.nextElementSibling.textContent=i.value;choose(sel)})}
+$('#wr').onclick=()=>{w=[...W0];wui();choose(sel)};
+$('#cp').onclick=()=>{const d=D[sel],v=R[F+'-'+d[0]];const t=`OrbitWatch lead ${d[0]} (${names[F]}, SIMULATED demo). ${d[1]}. Score ${score(sel).toFixed(1)}/100. Verdict: ${v?VERD[v]:'none'}. Not a discovery: verify with official SPHEREx data and known-object records.`;
+ (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>say('Evidence note copied'),()=>say('Could not copy. Your browser blocked it.'))};
+[['Orion Nebula',83.8221,-5.3911],['Andromeda Galaxy',10.68,41.27],['Pleiades',56.75,24.12],['Galactic center',266.42,-29.01]].forEach(([n,a,b])=>{const e=document.createElement('button');e.textContent=n;e.onclick=()=>{$('#ra').value=a;$('#dec').value=b};$('#pre').append(e)});
+$('#go').onclick=()=>{const a=+$('#ra').value,b=+$('#dec').value,s=+$('#sr').value;
+ if(!(a>=0&&a<360&&b>=-90&&b<=90&&s>0&&s<=3600&&$('#ra').value!==''&&$('#dec').value!==''))return $('#er').textContent=' Check the numbers: RA 0–360, Dec −90 to 90, size 1–3600.';
+ $('#er').textContent='';open(`https://irsa.ipac.caltech.edu/applications/spherex/?api=spectral-images&ra=${a}&dec=${b}&sr=${s}s`,'_blank','noopener')};
+$('#cmp').onclick=()=>{if(G)return;stop();cmp=!cmp;$('#cmp').classList.toggle('on',cmp);$('#sprow').hidden=!cmp;say(cmp?'Drag the slider: left shows the earlier date, right shows the later date.':'Single observation');draw()};
+$('#sp').oninput=draw;
+const pic={};function load(k,f){if(!f)return;const im=new Image();im.onload=()=>{pic[k]=im;if(pic.a&&pic.b){IMG=[pic.a,pic.b];G=null;tab('ex');$('#gbox').hidden=false;$('#gbox').innerHTML='Viewing <b>your own images</b> (not simulated). Stars should stay still; look for dots that move or change. <button id="bk">Back to simulated demo</button>';$('#bk').onclick=()=>{IMG=null;$('#gbox').hidden=true;draw()};setEp(0);say('Your images are loaded.')}};im.onerror=()=>$('#fe').textContent=' Could not read that image.';im.src=URL.createObjectURL(f)}
+$('#fa').onchange=e=>load('a',e.target.files[0]);$('#fb').onchange=e=>load('b',e.target.files[0]);
+wui();choose(0);if(!matchMedia('(prefers-reduced-motion:reduce)').matches)blink();
+</script></body></html>
